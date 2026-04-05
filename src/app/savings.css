@@ -1,0 +1,102 @@
+
+/* ========== Savings Goals ========== */
+.goal-card {
+  transition: all 0.3s var(--ease-out);
+}
+
+.goal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-md);
+}
+
+.goal-name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.goal-amount {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.goal-progress-container {
+  margin: var(--space-lg) 0;
+}
+
+.goal-progress-bar {
+  height: 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: var(--radius-full);
+  transition: width 1s var(--ease-out);
+}
+
+.goal-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ========== Alert Banner ========== */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--accent-red-soft);
+  border: 1px solid var(--accent-red);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-xl);
+  color: var(--accent-red);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+
+.alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-red);
+  color: white;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.alert-content {
+  flex-grow: 1;
+}
+
+.alert-title {
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  margin-bottom: 2px;
+}
+
+.alert-text {
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+}
