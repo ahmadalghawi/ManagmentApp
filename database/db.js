@@ -1,13 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const DB_PATH = path.join(process.cwd(), 'data', 'income.db');
+const baseDataDir = process.env.APP_DATA_PATH || path.join(process.cwd(), 'data');
+const DB_PATH = path.join(baseDataDir, 'income.db');
 
 // Ensure data directory exists
 import fs from 'fs';
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+if (!fs.existsSync(baseDataDir)) {
+  fs.mkdirSync(baseDataDir, { recursive: true });
 }
 
 let db;

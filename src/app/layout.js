@@ -4,8 +4,8 @@ import Sidebar from '@/components/Sidebar';
 import { ThemeProvider } from '@/context/ThemeContext';
 
 export const metadata = {
-  title: 'Income Manager - Personal Finance Tracker',
-  description: 'A personal income management app to track salary sources, monthly withdrawals, and money distributions.',
+  title: 'MeM - Personal Finance & Management',
+  description: 'Manage Me (MeM) - A personal income and self-management application for tracking work, salary, and distributions.',
 };
 
 export default function RootLayout({ children }) {

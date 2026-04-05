@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { updateSetting } from '@/lib/actions';
+
 
 const ThemeContext = createContext();
 
@@ -38,12 +40,16 @@ export function ThemeProvider({ children }) {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
+    // Sync to DB
+    updateSetting('theme', newTheme);
   };
 
   const changeThemeColor = (color) => {
     setThemeColor(color);
     localStorage.setItem('themeColor', color);
     document.documentElement.setAttribute('data-color', color);
+    // Sync to DB
+    updateSetting('themeColor', color);
   };
 
   return (

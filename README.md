@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📊 MeM (Manage Me) - Desktop App
 
-## Getting Started
+A premium, modern desktop application for managing complex income sources, tracking work hours, and automating monthly distributions.
 
-First, run the development server:
+![MeM App Icon](public/icon.png)
+
+## 🚀 Key Features
+
+-   **Desktop Native**: Runs as a standalone Windows application with a beautiful, sleek theme.
+-   **Time Tracker**: Log daily work hours for different clients/projects with hourly rates and status tracking (Unpaid, Invoiced, Paid).
+-   **Income Sources**: Manage long-term contracts with automated monthly withdrawal reminders.
+-   **One-Click Distributions**: Split your income across family, bills, and savings using reusable templates.
+-   **Payment Ledger**: A dedicated history for salary receipts, gifts, and project payments.
+-   **Savings Goals**: Track big purchases with animated progress bars and currency intelligence.
+-   **Multi-Currency Support**: Unified dashboard for DKK, SEK, and EUR balances.
+-   **RTL & Localization**: Fully localized for Arabic (RTL) and English.
+-   **PDF Reporting**: Export monthly summaries and balance receipts as professional documents.
+
+## 💻 Tech Stack
+
+-   **Frontend**: Next.js 14, React 18, Lucide Icons.
+-   **Styling**: Premium Vanilla CSS (Glassmorphism, Dark/Light modes).
+-   **Database**: SQLite (via `better-sqlite3`).
+-   **Desktop**: Electron Wrapper.
+
+## 🛠️ Getting Started (Development)
+
+### Prerequisites
+
+-   Node.js (LTS)
+-   npm
+
+### Installation
+
+```bash
+npm install
+```
+
+### Running the Desktop App
+
+To start the app in a standalone window with hot-reload:
+
+```bash
+npm run electron:dev
+```
+
+### Running the Web Version
+
+If you prefer to run it in your browser (localhost:3000):
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📦 Building the Installer
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+To generate a native Windows `.exe` installer:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run electron:build
+```
 
-## Learn More
+The installer will be generated in the `dist/` directory.
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Detailed documentation on project structure, database schema, and design standards can be found in the [doc/](doc/README.md) folder (see `PROJECT_GUIDE.md`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Powered by MeM Design System*

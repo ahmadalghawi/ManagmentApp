@@ -211,7 +211,7 @@ export default function LedgerClient({ entries, contacts }) {
       </div>
 
       {/* ── Filters ── */}
-      <div className="card animate-in" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)' }}>
+      <div className="card animate-in" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)', zIndex: 10, position: 'relative', overflow: 'visible' }}>
         <div className="form-row" style={{ alignItems: 'center', margin: 0 }}>
           <div className="form-group" style={{ margin: 0, position: 'relative', flex: 2 }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />

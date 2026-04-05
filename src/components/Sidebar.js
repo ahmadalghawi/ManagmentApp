@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
-import { LayoutDashboard, Wallet, Send, Users, FileText, Sun, Moon, Globe, Menu, X, Coins, Palette, BookOpen, Clock } from 'lucide-react';
+import { LayoutDashboard, Wallet, Send, Users, FileText, Sun, Moon, Globe, Menu, X, Coins, Palette, BookOpen, Clock, Settings } from 'lucide-react';
 import Modal from '@/components/Modal';
 
 export default function Sidebar() {
@@ -24,6 +24,7 @@ export default function Sidebar() {
     { href: '/savings', icon: <FileText size={20} />, label: t('savingsGoals') },
     { href: '/contacts', icon: <Users size={20} />, label: t('contacts') },
     { href: '/reports', icon: <FileText size={20} />, label: t('reports') },
+    { href: '/settings', icon: <Settings size={20} />, label: t('settings') || 'Settings' },
   ];
 
   const colors = [
@@ -52,9 +53,9 @@ export default function Sidebar() {
       <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <Coins size={22} color="#0a0e17" />
+            <img src="/icon.png" alt="MeM Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
           </div>
-          <span className="sidebar-title">{t('appName')}</span>
+          <span className="sidebar-title">MeM</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -72,19 +73,17 @@ export default function Sidebar() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="lang-toggle" onClick={() => setShowPalette(true)} title="Change Theme Color">
-             <Palette size={18} /> <span>{t('themeColor') || 'Theme Palette'}</span>
-          </button>
-          <button className="lang-toggle" onClick={toggleTheme} title="Toggle Dark/Light Mode">
-            {theme === 'dark' ? (
-              <><Sun size={18} /> <span>Light Mode</span></>
-            ) : (
-              <><Moon size={18} /> <span>Dark Mode</span></>
-            )}
-          </button>
-          <button className="lang-toggle" onClick={toggleLang}>
-            <Globe size={18} /> <span>{lang === 'en' ? 'العربية' : 'English'}</span>
-          </button>
+          <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+            <button className="lang-toggle" style={{ flex: 1, padding: '8px' }} onClick={toggleTheme} title={t('theme')}>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />} {t('theme')}
+            </button>
+            <button className="lang-toggle" style={{ flex: 1, padding: '8px' }} onClick={toggleLang} title={t('language')}>
+              <Globe size={18} /> {t('language')}
+            </button>
+          </div>
+          <Link href="/settings" className="lang-toggle" style={{ justifyContent: 'center' }}>
+            <Settings size={18} /> <span>{t('settings')}</span>
+          </Link>
         </div>
       </aside>
 

@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import translations from '@/lib/translations';
+import { updateSetting } from '@/lib/actions';
+
 
 const LanguageContext = createContext();
 
@@ -20,6 +22,8 @@ export function LanguageProvider({ children }) {
       localStorage.setItem('app-lang', lang);
       document.documentElement.setAttribute('lang', lang);
       document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      // Sync to DB
+      updateSetting('app-lang', lang);
     }
   }, [lang, mounted]);
 
