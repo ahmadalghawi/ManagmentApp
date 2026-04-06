@@ -1,6 +1,6 @@
 'use server';
 
-import getDb from '../../database/db';
+import getDb, { getProfilesState, saveProfilesState } from '../../database/db';
 import { revalidatePath } from 'next/cache';
 import { convertToCurrency } from './utils';
 
@@ -197,6 +197,7 @@ export async function getWithdrawals() {
           'contact_name', dc.name,
           'amount', d.amount,
           'method', d.method,
+          'distribution_date', d.distribution_date,
           'notes', d.notes
         )
       ) as distributions_json
@@ -222,8 +223,8 @@ export async function createWithdrawal(data) {
   );
 
   const insertDistribution = db.prepare(
-    `INSERT INTO distributions (withdrawal_id, contact_id, amount, method, notes)
-     VALUES (?, ?, ?, ?, ?)`
+    `INSERT INTO distributions (withdrawal_id, contact_id, amount, method, distribution_date, notes)
+     VALUES (?, ?, ?, ?, ?, ?)`
   );
 
   const transaction = db.transaction((withdrawalData) => {
@@ -245,6 +246,7 @@ export async function createWithdrawal(data) {
           dist.contact_id,
           dist.amount,
           dist.method || 'bank_transfer',
+          dist.distribution_date || withdrawalData.withdrawal_date,
           dist.notes || ''
         );
       }
@@ -271,8 +273,8 @@ export async function updateWithdrawal(data) {
 
   const deleteDistributions = db.prepare('DELETE FROM distributions WHERE withdrawal_id = ?');
   const insertDistribution = db.prepare(
-    `INSERT INTO distributions (withdrawal_id, contact_id, amount, method, notes)
-     VALUES (?, ?, ?, ?, ?)`
+    `INSERT INTO distributions (withdrawal_id, contact_id, amount, method, distribution_date, notes)
+     VALUES (?, ?, ?, ?, ?, ?)`
   );
 
   const transaction = db.transaction((withdrawalData) => {
@@ -294,6 +296,7 @@ export async function updateWithdrawal(data) {
           dist.contact_id,
           dist.amount,
           dist.method || 'bank_transfer',
+          dist.distribution_date || withdrawalData.withdrawal_date,
           dist.notes || ''
         );
       }
@@ -392,13 +395,15 @@ export async function updateSavingsGoal(formData) {
   const name = formData.get('name');
   const target = parseFloat(formData.get('target_amount'));
   const current = parseFloat(formData.get('current_amount'));
+  const currency = formData.get('currency') || 'DKK';
+  const deadline = formData.get('deadline') || '';
   const status = formData.get('status') || 'active';
 
   db.prepare(`
-    UPDATE savings_goals 
-    SET name = ?, target_amount = ?, current_amount = ?, status = ?
+    UPDATE savings_goals
+    SET name = ?, target_amount = ?, current_amount = ?, currency = ?, deadline = ?, status = ?
     WHERE id = ?
-  `).run(name, target, current, status, id);
+  `).run(name, target, current, currency, deadline, status, id);
 
   revalidatePath('/savings');
   revalidatePath('/');
@@ -687,6 +692,71 @@ export async function deleteWorkLog(id) {
   const db = getDb();
   db.prepare('DELETE FROM work_logs WHERE id = ?').run(id);
   revalidatePath('/timelog');
+  revalidatePath('/');
+  return { success: true };
+}
+
+// ===================== WORKSPACE PROFILES =====================
+
+export async function getWorkspaceProfiles() {
+  const state = getProfilesState();
+  return {
+    activeProfile: state.activeProfile,
+    profiles: Object.values(state.profiles).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+  };
+}
+
+export async function switchWorkspace(profileId) {
+  const state = getProfilesState();
+  if (state.profiles[profileId]) {
+    state.activeProfile = profileId;
+    saveProfilesState(state);
+    revalidatePath('/');
+    return { success: true };
+  }
+  return { success: false, error: 'Profile not found' };
+}
+
+export async function createWorkspace(data) {
+  const { name, color } = data;
+  const state = getProfilesState();
+  const id = 'ws_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  
+  state.profiles[id] = {
+    id,
+    name,
+    color: color || '#0ea5e9',
+    dbFile: `income_${id}.db`,
+    createdAt: Date.now()
+  };
+  state.activeProfile = id;
+  saveProfilesState(state);
+  revalidatePath('/'); // refresh the whole app to reflect the new empty database
+  return { success: true, id };
+}
+
+export async function deleteWorkspace(profileId) {
+  const state = getProfilesState();
+  if (profileId === 'default' || !state.profiles[profileId]) return { success: false, error: 'Cannot delete this profile' };
+  
+  delete state.profiles[profileId];
+  if (state.activeProfile === profileId) {
+    state.activeProfile = 'default';
+  }
+  saveProfilesState(state);
+  revalidatePath('/');
+  return { success: true };
+}
+
+export async function updateWorkspace(profileId, data) {
+  const state = getProfilesState();
+  if (!state.profiles[profileId]) return { success: false, error: 'Profile not found' };
+  
+  state.profiles[profileId] = {
+    ...state.profiles[profileId],
+    ...data
+  };
+  saveProfilesState(state);
   revalidatePath('/');
   return { success: true };
 }

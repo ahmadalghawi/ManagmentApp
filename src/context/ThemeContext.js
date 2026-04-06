@@ -6,33 +6,18 @@ import { updateSetting } from '@/lib/actions';
 
 const ThemeContext = createContext();
 
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('dark');
-  const [themeColor, setThemeColor] = useState('blue');
+export function ThemeProvider({ children, initialTheme = 'dark', initialColor = 'blue' }) {
+  const [theme, setTheme] = useState(initialTheme);
+  const [themeColor, setThemeColor] = useState(initialColor);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Try to restore theme from local storage
-    const savedTheme = localStorage.getItem('theme');
-    const savedColor = localStorage.getItem('themeColor') || 'blue';
-    
-    // Set Color
-    setThemeColor(savedColor);
-    document.documentElement.setAttribute('data-color', savedColor);
-
-    // Set Theme
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else if (mediaQuery.matches) {
-      setTheme('light');
-      document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-      setTheme('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
+    // Sync localStorage with DB-provided values
+    localStorage.setItem('theme', initialTheme);
+    localStorage.setItem('themeColor', initialColor);
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    document.documentElement.setAttribute('data-color', initialColor);
   }, []);
 
   const toggleTheme = () => {

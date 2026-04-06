@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
-import { Settings, Moon, Sun, Globe, Palette, Database, Info, RefreshCw, Save, HardDrive } from 'lucide-react';
+import { Settings, Moon, Sun, Globe, Palette, Database, Info, RefreshCw, Save, HardDrive, Camera, Mail, User } from 'lucide-react';
 import Toast from '@/components/Toast';
-import { updateSetting } from '@/lib/actions';
+import { updateSetting, updateWorkspace } from '@/lib/actions';
+import { useRef } from 'react';
 
 export default function SettingsClient({ initialSettings, contacts }) {
   const { t, lang, setLang } = useLanguage();
@@ -13,6 +14,32 @@ export default function SettingsClient({ initialSettings, contacts }) {
   
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
+  
+  const workspace = initialSettings.workspace || { id: 'default', name: 'MeM' };
+  const [workspaceName, setWorkspaceName] = useState(workspace.name);
+  const [workspaceEmail, setWorkspaceEmail] = useState(workspace.email || '');
+  const [workspacePic, setWorkspacePic] = useState(workspace.profilePic || null);
+  const fileInputRef = useRef(null);
+  
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({ message: 'Image size should be less than 5MB', type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target.result;
+      setWorkspacePic(base64);
+      await updateWorkspace(workspace.id, { profilePic: base64 });
+      setToast({ message: 'Profile picture updated', type: 'success' });
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   const colors = [
     { id: 'blue', color: '#0ea5e9' },
@@ -75,29 +102,75 @@ export default function SettingsClient({ initialSettings, contacts }) {
           {activeTab === 'general' && (
             <div className="card animate-in">
               <h3 className="section-title flex items-center gap-2 mb-lg">
-                <Info size={18} className="text-secondary" />
-                {t('appIdentity')}
+                <User size={18} className="text-secondary" />
+                Workspace Profile
               </h3>
               
-              <div className="form-group">
-                <label className="form-label">{t('appDisplayName')}</label>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                  <input 
-                    className="form-input" 
-                    defaultValue={initialSettings.appName} 
-                    onBlur={async (e) => {
-                      if (e.target.value) {
-                         await updateSetting('custom-app-name', e.target.value);
-                         setToast({ message: t('restartRequired'), type: 'info' });
-                      }
-                    }}
-                    placeholder={t('appName')}
-                  />
-                  <button className="btn btn-secondary">{t('edit')}</button>
-                </div>
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                 {/* Profile Picture */}
+                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <div 
+                      onClick={() => fileInputRef.current.click()}
+                      style={{ 
+                        width: '80px', height: '80px', borderRadius: '20px', 
+                        background: workspacePic ? 'transparent' : 'var(--accent-primary)', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        color: '#fff', fontSize: '32px', fontWeight: 'bold',
+                        cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                        boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)'
+                      }}
+                      className="avatar-editable"
+                    >
+                      {workspacePic ? (
+                        <img src={workspacePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        workspaceName.charAt(0).toUpperCase()
+                      )}
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                         <Camera size={24} />
+                      </div>
+                    </div>
+                    <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleAvatarUpload} />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click to change</span>
+                 </div>
+
+                 {/* Profile Details */}
+                 <div style={{ flex: 1, minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label">{t('appDisplayName') || 'Workspace Name'}</label>
+                      <input 
+                        className="form-input" 
+                        value={workspaceName} 
+                        onChange={(e) => setWorkspaceName(e.target.value)}
+                        onBlur={async () => {
+                          if (workspaceName.trim() && workspaceName !== workspace.name) {
+                             await updateWorkspace(workspace.id, { name: workspaceName.trim() });
+                             setToast({ message: 'Workspace name updated', type: 'success' });
+                          }
+                        }}
+                        placeholder="e.g. My Freelance Business"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label flex items-center gap-2">Email Address</label>
+                      <input 
+                        className="form-input" 
+                        type="email"
+                        value={workspaceEmail} 
+                        onChange={(e) => setWorkspaceEmail(e.target.value)}
+                        onBlur={async () => {
+                          if (workspaceEmail !== workspace.email) {
+                             await updateWorkspace(workspace.id, { email: workspaceEmail.trim() });
+                             setToast({ message: 'Email address updated', type: 'success' });
+                          }
+                        }}
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                 </div>
               </div>
 
-              <hr className="divider" />
+              <hr className="divider" style={{ marginTop: '32px' }} />
 
               <h3 className="section-title flex items-center gap-2 mb-lg">
                 <Globe size={18} className="text-blue" />

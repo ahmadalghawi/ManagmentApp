@@ -26,7 +26,7 @@ export default function Modal({ isOpen, onClose, title, children, size }) {
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body">
+        <div className="modal-body modal-content-scrollable">
           {children}
         </div>
       </div>

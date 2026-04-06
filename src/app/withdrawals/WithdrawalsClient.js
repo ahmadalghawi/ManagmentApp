@@ -20,14 +20,14 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
   const [editingWithdrawal, setEditingWithdrawal] = useState(null);
   const [toast, setToast] = useState(null);
   const [selectedSourceId, setSelectedSourceId] = useState('');
-  const [distributions, setDistributions] = useState([{ contact_id: '', amount: '', method: 'bank_transfer', notes: '' }]);
+  const [distributions, setDistributions] = useState([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
 
   const selectedSource = sources.find(s => s.id === parseInt(selectedSourceId));
 
   const addDistribution = () => {
-    setDistributions([...distributions, { contact_id: '', amount: '', method: 'bank_transfer', notes: '' }]);
+    setDistributions([...distributions, { contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
   };
 
   const removeDistribution = (index) => {
@@ -53,6 +53,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
         contact_id: t.contact_id.toString(),
         amount: t.amount.toString(),
         method: t.method,
+        distribution_date: new Date().toISOString().split('T')[0],
         notes: ''
       })));
     }
@@ -69,6 +70,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
         contact_id: parseInt(d.contact_id),
         amount: parseFloat(d.amount),
         method: d.method,
+        distribution_date: d.distribution_date,
         notes: d.notes,
       }));
 
@@ -103,7 +105,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
     setShowModal(false);
     setSelectedSourceId('');
     setEditingWithdrawal(null);
-    setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', notes: '' }]);
+    setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
     router.refresh();
   };
 
@@ -114,6 +116,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
       contact_id: d.contact_id,
       amount: d.amount.toString(),
       method: d.method,
+      distribution_date: d.distribution_date || w.withdrawal_date,
       notes: d.notes || ''
     })));
     setShowModal(true);
@@ -122,7 +125,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
   const openNew = () => {
     setEditingWithdrawal(null);
     setSelectedSourceId('');
-    setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', notes: '' }]);
+    setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
     setShowModal(true);
   };
 
@@ -207,8 +210,11 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
                             d.method === 'revolut' ? t('revolut') : d.method})
                         </span>
                       </div>
-                      <span className="distribution-amount">
-                        {w.currency} {formatNumber(d.amount)}
+                      <span className="distribution-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                        <span style={{ fontWeight: 700 }}>{w.currency} {formatNumber(d.amount)}</span>
+                        {d.distribution_date && d.distribution_date !== w.withdrawal_date && (
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>{d.distribution_date}</span>
+                        )}
                       </span>
                     </div>
                   ))}
@@ -226,7 +232,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
           setShowModal(false);
           setEditingWithdrawal(null);
           setSelectedSourceId('');
-          setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', notes: '' }]);
+          setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
         }}
         title={editingWithdrawal ? t('edit') : t('recordNewWithdrawal')}
         size="lg"
@@ -300,22 +306,40 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
 
           <div className="form-group">
             <label className="form-label">{t('notes')}</label>
-            <input className="form-input" name="notes" defaultValue={editingWithdrawal?.notes || ''} placeholder={t('notes')} />
+            <textarea 
+              className="form-textarea" 
+              name="notes" 
+              defaultValue={editingWithdrawal?.notes || ''} 
+              placeholder={t('notes')}
+              rows={2}
+            />
           </div>
 
           {/* Distributions */}
-          <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-md)', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
-            <div className="flex-between mb-md">
-              <label className="form-label" style={{ margin: 0 }}>{t('distributions')}</label>
+          <div className="distributions-container animate-in">
+            <div className="distributions-header flex-between">
+              <label className="form-label">{t('distributions')}</label>
               <button type="button" className="btn btn-ghost btn-sm" onClick={addDistribution}>
-                + {t('addDistribution')}
+                <PlusCircle size={14} style={{ marginInlineEnd: '4px' }} />
+                {t('addDistribution')}
               </button>
             </div>
 
-            {distributions.map((dist, i) => (
-              <div key={i} className="dist-row">
+            {/* Header Labels (Desktop only) */}
+            {distributions.length > 0 && (
+              <div className="dist-row-header">
+                <span>{t('recipient')}</span>
+                <span className="text-center">{t('amount')}</span>
+                <span>{t('method')}</span>
+                <span className="text-center">{t('date') || 'Date'}</span>
+                <span style={{ width: '32px' }}></span>
+              </div>
+            )}
+
+            <div className="distributions-list-scroll">
+              {distributions.map((dist, i) => (
+                <div key={i} className="dist-row">
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>{t('recipient')}</label>
                   <CustomSelect
                     name="contact_id"
                     value={dist.contact_id}
@@ -328,9 +352,8 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
                   />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>{t('amount')}</label>
                   <input
-                    className="form-input"
+                    className="form-input text-center"
                     type="number"
                     step="0.01"
                     value={dist.amount}
@@ -339,7 +362,6 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
                   />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>{t('method')}</label>
                   <CustomSelect
                     name="method"
                     value={dist.method}
@@ -352,15 +374,24 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
                     ]}
                   />
                 </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <input
+                    className="form-input text-center"
+                    type="date"
+                    value={dist.distribution_date}
+                    onChange={(e) => updateDistribution(i, 'distribution_date', e.target.value)}
+                  />
+                </div>
                 <div style={{ paddingBottom: '2px' }}>
                   {distributions.length > 1 && (
                     <button type="button" className="btn btn-ghost btn-icon text-red" onClick={() => removeDistribution(i)}>
                       <X size={16} />
                     </button>
                   )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             <div className="dist-total-row">
               <span>{t('distributionTotal')}</span>

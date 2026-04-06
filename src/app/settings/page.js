@@ -1,4 +1,4 @@
-import { getContacts, getSetting } from '@/lib/actions';
+import { getContacts, getSetting, getWorkspaceProfiles } from '@/lib/actions';
 import SettingsClient from './SettingsClient';
 
 export const metadata = {
@@ -13,12 +13,14 @@ export default async function SettingsPage() {
   const currentTheme = await getSetting('theme') || 'dark';
   const currentThemeColor = await getSetting('themeColor') || 'blue';
   const appName = await getSetting('custom-app-name') || 'MeM';
+  const workspaceState = await getWorkspaceProfiles();
 
   const initialSettings = {
     lang: currentLang,
     theme: currentTheme,
     themeColor: currentThemeColor,
-    appName: appName
+    appName: appName,
+    workspace: workspaceState.profiles.find(p => p.id === workspaceState.activeProfile) || null
   };
 
   return (

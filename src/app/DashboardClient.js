@@ -21,8 +21,10 @@ function formatNumber(num) {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
 }
 
-export default function DashboardClient({ data }) {
+export default function DashboardClient({ data, activeProfile }) {
   const { t } = useLanguage();
+  const profile = activeProfile || { name: 'MeM', color: '#0ea5e9' };
+  
   const { 
     sources, 
     totalIncome, 
@@ -40,11 +42,44 @@ export default function DashboardClient({ data }) {
 
   return (
     <div className="animate-in">
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-2">
-          {t('welcomeBack')} <HandMetal size={28} className="text-accent" />
-        </h1>
-        <p className="page-subtitle">{t('overview')}</p>
+      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', marginBottom: '2rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '12px', 
+              background: profile.color, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: 'white', 
+              fontWeight: 'bold',
+              fontSize: '18px',
+              boxShadow: `0 8px 16px ${profile.color}33`,
+              overflow: 'hidden',
+              border: '2px solid var(--bg-secondary)'
+            }}>
+              {profile.profilePic ? (
+                <img src={profile.profilePic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                profile.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem' }}>
+              {t('welcomeBack') || 'Welcome back'}, <span className="text-gradient">{profile.name}</span>!
+            </h1>
+          </div>
+          <p className="page-subtitle" style={{ margin: 0 }}>
+            {profile.email ? `${profile.email} • ` : ''} {t('overview')}
+          </p>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '10px' }}>
+           <div className="badge badge-accent" style={{ padding: '8px 16px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
+              {currentMonthLabel.toUpperCase()}
+           </div>
+        </div>
       </div>
 
       {showAlarm && (

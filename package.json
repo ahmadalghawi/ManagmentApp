@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start -p 54321",
     "electron:dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:54321 && electron .\"",
-    "electron:build": "npm rebuild better-sqlite3 && npm run build && electron-builder"
+    "electron:build": "npm run build && node electron/fix-externals.js && electron-builder && node electron/post-build.js"
   },
   "build": {
     "appId": "com.mem.manageme",
@@ -18,16 +18,13 @@
     "directories": {
       "output": "dist"
     },
-    "asar": true,
-    "asarUnpack": [
-      "node_modules/better-sqlite3/**/*",
-      "node_modules/bindings/**/*"
-    ],
+    "asar": false,
+    "npmRebuild": false,
     "files": [
       "electron/**/*",
       ".next/**/*",
+      ".next/node_modules/**/*",
       "public/**/*",
-      "src/**/*",
       "database/**/*",
       "next.config.mjs",
       "package.json",
@@ -46,6 +43,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
+    "fs-extra": "^11.3.4",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.7.0",

@@ -1,7 +1,11 @@
-import { getDashboardData } from '@/lib/actions';
+import { getDashboardData, getWorkspaceProfiles } from '@/lib/actions';
 import DashboardClient from './DashboardClient';
 
 export default async function DashboardPage() {
   const data = await getDashboardData();
-  return <DashboardClient data={data} />;
+  const workspaceState = await getWorkspaceProfiles();
+  const activeProfileId = workspaceState.activeProfile;
+  const activeProfile = workspaceState.profiles.find(p => p.id === activeProfileId) || { name: 'MeM' };
+
+  return <DashboardClient data={data} activeProfile={activeProfile} />;
 }

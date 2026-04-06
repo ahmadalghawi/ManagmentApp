@@ -10,14 +10,44 @@ if (!fs.existsSync(baseDataDir)) {
   fs.mkdirSync(baseDataDir, { recursive: true });
 }
 
-let db;
+let currentDbId = null;
+let db = null;
+
+export function getProfilesState() {
+  const PROFILES_PATH = path.join(baseDataDir, 'profiles.json');
+  if (!fs.existsSync(PROFILES_PATH)) {
+    const defaultState = {
+      activeProfile: 'default',
+      profiles: {
+        'default': { id: 'default', name: 'My Personal Profile', dbFile: 'income.db', color: '#0ea5e9', createdAt: Date.now() }
+      }
+    };
+    fs.writeFileSync(PROFILES_PATH, JSON.stringify(defaultState, null, 2));
+    return defaultState;
+  }
+  return JSON.parse(fs.readFileSync(PROFILES_PATH, 'utf-8'));
+}
+
+export function saveProfilesState(state) {
+  const PROFILES_PATH = path.join(baseDataDir, 'profiles.json');
+  fs.writeFileSync(PROFILES_PATH, JSON.stringify(state, null, 2));
+}
 
 function getDb() {
-  if (!db) {
-    db = new Database(DB_PATH);
+  const state = getProfilesState();
+  const activeProfile = state.profiles[state.activeProfile];
+  const dbFilename = activeProfile ? activeProfile.dbFile : 'income.db';
+  const targetDbPath = path.join(baseDataDir, dbFilename);
+
+  if (!db || currentDbId !== state.activeProfile) {
+    if (db) {
+       try { db.close(); } catch(e) {}
+    }
+    db = new Database(targetDbPath);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     initializeDb(db);
+    currentDbId = state.activeProfile;
   }
   return db;
 }
@@ -65,6 +95,7 @@ function initializeDb(database) {
       contact_id INTEGER NOT NULL,
       amount REAL NOT NULL,
       method TEXT DEFAULT 'bank_transfer',
+      distribution_date TEXT,
       notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (withdrawal_id) REFERENCES withdrawals(id) ON DELETE CASCADE,
@@ -133,6 +164,17 @@ function initializeDb(database) {
   const existing = database.prepare('SELECT key FROM settings WHERE key = ?').get('currency');
   if (!existing) {
     database.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('currency', 'DKK');
+  }
+
+  // PRAGMA migrations check for missing columns in existing deployments
+  try {
+    const tableInfo = database.prepare("PRAGMA table_info(distributions)").all();
+    const hasCol = tableInfo.some(c => c.name === 'distribution_date');
+    if (!hasCol) {
+      database.exec("ALTER TABLE distributions ADD COLUMN distribution_date TEXT");
+    }
+  } catch (err) {
+    console.error("Migration error:", err);
   }
 }
 

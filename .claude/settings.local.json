@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"c:/my work/Managment system/ManagmentApp/dist/\"*.exe)",
+      "Bash(timeout 15 npx next start -p 54322)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:54322/)",
+      "Bash(node -e ':*)",
+      "Bash(\"c:/my work/Managment system/ManagmentApp/dist/win-unpacked/MeM.exe\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:54321/)",
+      "Bash(npm rebuild:*)",
+      "Read(//c/Program Files/MeM/resources/app/.next/node_modules/**)",
+      "Read(//c/Program Files/MeM/resources/app/.next/**)",
+      "Bash(npx @electron/rebuild -f -w better-sqlite3)",
+      "Bash(node -e \"try { const bs = require\\('better-sqlite3'\\); new bs\\(':memory:'\\); console.log\\('Dev mode: better-sqlite3 OK'\\); } catch\\(e\\) { console.log\\('FAIL:', e.message.split\\('\\\\\\\\n'\\)[0]\\); }\")"
+    ]
+  }
+}

@@ -233,8 +233,8 @@ export default function ReportsClient({ sources, withdrawals, contacts }) {
       </div>
 
       {/* Filters & Actions */}
-      <div className="card mb-lg animate-in stagger-1">
-        <div className="report-header">
+      <div className="card mb-lg animate-in stagger-1" style={{ position: 'relative', zIndex: 100, overflow: 'visible' }}>
+        <div className="report-header" style={{ overflow: 'visible' }}>
           <div className="report-filters">
             <div className="form-group" style={{ margin: 0, minWidth: '120px' }}>
               <CustomSelect 

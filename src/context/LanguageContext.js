@@ -7,13 +7,13 @@ import { updateSetting } from '@/lib/actions';
 
 const LanguageContext = createContext();
 
-export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('en');
+export function LanguageProvider({ children, initialLang = 'en' }) {
+  const [lang, setLang] = useState(initialLang);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('app-lang') || 'en';
-    setLang(saved);
+    // Sync localStorage with DB-provided value
+    localStorage.setItem('app-lang', initialLang);
     setMounted(true);
   }, []);
 
