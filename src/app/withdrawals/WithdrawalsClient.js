@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { createWithdrawal, updateWithdrawal, deleteWithdrawal, createDistributionTemplate } from '@/lib/actions';
 import Modal from '@/components/Modal';
 import Toast from '@/components/Toast';
 import CustomSelect from '@/components/CustomSelect';
-import { Send, Trash2, X, PlusCircle, Edit } from 'lucide-react';
+import { Send, Trash2, X, PlusCircle, Edit, ChevronDown } from 'lucide-react';
 
 function formatNumber(num) {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
@@ -23,8 +23,16 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
   const [distributions, setDistributions] = useState([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [showDetails, setShowDetails] = useState(true);
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
 
   const selectedSource = sources.find(s => s.id === parseInt(selectedSourceId));
+
+  useEffect(() => {
+    if (!editingWithdrawal && selectedSource) {
+      setWithdrawalAmount(selectedSource.monthly_amount.toString());
+    }
+  }, [selectedSourceId, selectedSource, editingWithdrawal]);
 
   const addDistribution = () => {
     setDistributions([...distributions, { contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
@@ -119,6 +127,8 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
       distribution_date: d.distribution_date || w.withdrawal_date,
       notes: d.notes || ''
     })));
+    setWithdrawalAmount(w.amount.toString());
+    setShowDetails(true);
     setShowModal(true);
   };
 
@@ -126,6 +136,8 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
     setEditingWithdrawal(null);
     setSelectedSourceId('');
     setDistributions([{ contact_id: '', amount: '', method: 'bank_transfer', distribution_date: new Date().toISOString().split('T')[0], notes: '' }]);
+    setWithdrawalAmount('');
+    setShowDetails(true);
     setShowModal(true);
   };
 
@@ -163,7 +175,7 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div className="grid-2">
           {withdrawals.map((w) => (
             <div key={w.id} className="card withdrawal-card animate-in">
               <div className="withdrawal-header">
@@ -192,6 +204,24 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
 
               {w.notes && (
                 <p className="text-muted" style={{ fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>{w.notes}</p>
+              )}
+
+              {/* Dynamic split mini-meter */}
+              {w.distributions.length > 0 && (
+                <div className="card-distribution-mini-bar" style={{ marginTop: '12px', marginBottom: '8px' }}>
+                  {w.distributions.map((d, i) => (
+                    <div
+                      key={i}
+                      className="card-distribution-mini-segment"
+                      style={{
+                        width: `${(d.amount / w.amount) * 100}%`,
+                        background: i % 3 === 0 ? 'var(--accent-primary)' :
+                                    i % 3 === 1 ? 'var(--accent-secondary)' : 'var(--accent-green)'
+                      }}
+                      title={`${d.contact_name}: ${w.currency} ${formatNumber(d.amount)}`}
+                    />
+                  ))}
+                </div>
               )}
 
               {w.distributions.length > 0 && (
@@ -238,200 +268,306 @@ export default function WithdrawalsClient({ withdrawals, sources, contacts, temp
         size="lg"
       >
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">{t('selectSource')}</label>
-            <CustomSelect
-              name="income_source_id"
-              value={selectedSourceId}
-              onChange={(e) => setSelectedSourceId(e.target.value)}
-              disabled={!!editingWithdrawal}
-              placeholder={t('selectSource')}
-              options={[
-                { value: "", label: t('selectSource') },
-                ...sources.map(s => {
-                  const remaining = s.total_amount - s.total_withdrawn;
-                  return {
-                    value: s.id,
-                    label: `${s.contact_name} — ${s.currency} ${formatNumber(remaining)} ${t('remaining').toLowerCase()}`
-                  };
-                })
-              ]}
-            />
-          </div>
-
-          {!editingWithdrawal && selectedSourceId && (
-            <div className="form-group animate-in">
-              <label className="form-label">{t('useTemplate')}</label>
-              <CustomSelect
-                name="template_select"
-                onChange={(e) => applyTemplate(e.target.value)}
-                placeholder={t('useTemplate')}
-                options={[
-                  { value: "", label: t('useTemplate') },
-                  ...[...new Set(templates.filter(t => !t.income_source_id || t.income_source_id === parseInt(selectedSourceId)).map(t => t.name))].map(name => {
-                    const firstMatch = templates.find(t => t.name === name);
-                    return { value: firstMatch.id, label: name };
-                  })
-                ]}
-              />
-            </div>
-          )}
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">{t('amount')}</label>
-              <input className="form-input" name="amount" type="number" step="0.01" required
-                defaultValue={editingWithdrawal?.amount || selectedSource?.monthly_amount || ''} placeholder="12500" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">{t('withdrawalDate')}</label>
-              <input className="form-input" name="withdrawal_date" type="date" required
-                defaultValue={editingWithdrawal?.withdrawal_date || new Date().toISOString().split('T')[0]} />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">{t('monthNumber')}</label>
-              <input className="form-input" name="month_number" type="number" required
-                defaultValue={editingWithdrawal?.month_number || (selectedSource ? selectedSource.withdrawal_count + 1 : '')} placeholder="1" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">{t('monthLabel')}</label>
-              <input className="form-input" name="month_label" 
-                defaultValue={editingWithdrawal?.month_label || ''}
-                placeholder="March 2026" />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t('notes')}</label>
-            <textarea 
-              className="form-textarea" 
-              name="notes" 
-              defaultValue={editingWithdrawal?.notes || ''} 
-              placeholder={t('notes')}
-              rows={2}
-            />
-          </div>
-
-          {/* Distributions */}
-          <div className="distributions-container animate-in">
-            <div className="distributions-header flex-between">
-              <label className="form-label">{t('distributions')}</label>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={addDistribution}>
-                <PlusCircle size={14} style={{ marginInlineEnd: '4px' }} />
-                {t('addDistribution')}
-              </button>
-            </div>
-
-            {/* Header Labels (Desktop only) */}
-            {distributions.length > 0 && (
-              <div className="dist-row-header">
-                <span>{t('recipient')}</span>
-                <span className="text-center">{t('amount')}</span>
-                <span>{t('method')}</span>
-                <span className="text-center">{t('date') || 'Date'}</span>
-                <span style={{ width: '32px' }}></span>
+          <div className="modal-form-grid">
+            {/* Left Column: Metadata & Source Info */}
+            <div className="modal-form-left">
+              <div className="form-group">
+                <label className="form-label">{t('selectSource')}</label>
+                <CustomSelect
+                  name="income_source_id"
+                  value={selectedSourceId}
+                  onChange={(e) => setSelectedSourceId(e.target.value)}
+                  disabled={!!editingWithdrawal}
+                  placeholder={t('selectSource')}
+                  options={[
+                    { value: "", label: t('selectSource') },
+                    ...sources.map(s => {
+                      const remaining = s.total_amount - s.total_withdrawn;
+                      return {
+                        value: s.id,
+                        label: `${s.contact_name} — ${s.currency} ${formatNumber(remaining)} ${t('remaining').toLowerCase()}`
+                      };
+                    })
+                  ]}
+                />
               </div>
-            )}
 
-            <div className="distributions-list-scroll">
-              {distributions.map((dist, i) => (
-                <div key={i} className="dist-row">
-                <div className="form-group" style={{ margin: 0 }}>
+              {!editingWithdrawal && selectedSourceId && (
+                <div className="form-group animate-in">
+                  <label className="form-label">{t('useTemplate')}</label>
                   <CustomSelect
-                    name="contact_id"
-                    value={dist.contact_id}
-                    onChange={(e) => updateDistribution(i, 'contact_id', e.target.value)}
-                    placeholder={t('recipient')}
+                    name="template_select"
+                    onChange={(e) => applyTemplate(e.target.value)}
+                    placeholder={t('useTemplate')}
                     options={[
-                      { value: "", label: t('recipient') },
-                      ...contacts.map(c => ({ value: c.id, label: c.name }))
+                      { value: "", label: t('useTemplate') },
+                      ...[...new Set(templates.filter(t => !t.income_source_id || t.income_source_id === parseInt(selectedSourceId)).map(t => t.name))].map(name => {
+                        const firstMatch = templates.find(t => t.name === name);
+                        return { value: firstMatch.id, label: name };
+                      })
                     ]}
                   />
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <input
-                    className="form-input text-center"
-                    type="number"
-                    step="0.01"
-                    value={dist.amount}
-                    onChange={(e) => updateDistribution(i, 'amount', e.target.value)}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <CustomSelect
-                    name="method"
-                    value={dist.method}
-                    onChange={(e) => updateDistribution(i, 'method', e.target.value)}
-                    options={[
-                      { value: 'bank_transfer', label: t('bankTransfer') },
-                      { value: 'cash', label: t('cash') },
-                      { value: 'revolut', label: t('revolut') },
-                      { value: 'other', label: t('otherMethod') }
-                    ]}
-                  />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <input
-                    className="form-input text-center"
-                    type="date"
-                    value={dist.distribution_date}
-                    onChange={(e) => updateDistribution(i, 'distribution_date', e.target.value)}
-                  />
-                </div>
-                <div style={{ paddingBottom: '2px' }}>
-                  {distributions.length > 1 && (
-                    <button type="button" className="btn btn-ghost btn-icon text-red" onClick={() => removeDistribution(i)}>
-                      <X size={16} />
-                    </button>
-                  )}
-                  </div>
-                </div>
-              ))}
-            </div>
+              )}
 
-            <div className="dist-total-row">
-              <span>{t('distributionTotal')}</span>
-              <span className={distTotal > 0 ? 'dist-total-match' : ''}>{formatNumber(distTotal)}</span>
-            </div>
-
-            {!editingWithdrawal && (
-              <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-                <label className="flex-between" style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  <span className="form-label" style={{ margin: 0 }}>{t('saveAsTemplate')}</span>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">{t('amount')}</label>
                   <input 
-                    type="checkbox" 
-                    checked={saveAsTemplate} 
-                    onChange={(e) => setSaveAsTemplate(e.target.checked)} 
-                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
+                    className="form-input" 
+                    name="amount" 
+                    type="number" 
+                    step="0.01" 
+                    required
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    placeholder="12500" 
                   />
-                </label>
-                
-                {saveAsTemplate && (
-                  <div className="animate-in">
-                    <input 
-                      className="form-input" 
-                      placeholder={t('templateName')} 
-                      value={templateName}
-                      onChange={(e) => setTemplateName(e.target.value)}
-                      required={saveAsTemplate}
-                    />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">{t('withdrawalDate')}</label>
+                  <input className="form-input" name="withdrawal_date" type="date" required
+                    defaultValue={editingWithdrawal?.withdrawal_date || new Date().toISOString().split('T')[0]} />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">{t('monthNumber')}</label>
+                  <input className="form-input" name="month_number" type="number" required
+                    defaultValue={editingWithdrawal?.month_number || (selectedSource ? selectedSource.withdrawal_count + 1 : '')} placeholder="1" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">{t('monthLabel')}</label>
+                  <input className="form-input" name="month_label" 
+                    defaultValue={editingWithdrawal?.month_label || ''}
+                    placeholder="March 2026" />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">{t('notes')}</label>
+                <textarea 
+                  className="form-textarea" 
+                  name="notes" 
+                  defaultValue={editingWithdrawal?.notes || ''} 
+                  placeholder={t('notes')}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Distributions List & Comparison Tracker */}
+            <div className="modal-form-right">
+              <div className="distributions-container">
+                <div className="distributions-header flex-between" style={{ marginBottom: 'var(--space-md)' }}>
+                  <label className="form-label" style={{ margin: 0 }}>{t('distributions')}</label>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={addDistribution}>
+                    <PlusCircle size={14} style={{ marginInlineEnd: '4px' }} />
+                    {t('addDistribution')}
+                  </button>
+                </div>
+
+                <div className="distributions-list-scroll" style={{ maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {distributions.map((dist, i) => (
+                    <div key={i} className="distribution-input-card">
+                      <div className="distribution-card-header">
+                        <span>{t('distribution') || 'Distribution'} #{i + 1}</span>
+                        {distributions.length > 1 && (
+                          <button 
+                            type="button" 
+                            className="btn btn-ghost btn-sm text-red" 
+                            onClick={() => removeDistribution(i)}
+                            style={{ padding: '2px 8px', height: 'auto' }}
+                          >
+                            <X size={13} style={{ marginInlineEnd: '2px' }} />
+                            {t('delete') || 'Remove'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="distribution-card-grid">
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label-small">{t('recipient')}</label>
+                          <CustomSelect
+                            name="contact_id"
+                            value={dist.contact_id}
+                            onChange={(e) => updateDistribution(i, 'contact_id', e.target.value)}
+                            placeholder={t('recipient')}
+                            options={[
+                              { value: "", label: t('recipient') },
+                              ...contacts.map(c => ({ value: c.id, label: c.name }))
+                            ]}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label-small">{t('amount')}</label>
+                          <input
+                            className="form-input text-center"
+                            type="number"
+                            step="0.01"
+                            value={dist.amount}
+                            onChange={(e) => updateDistribution(i, 'amount', e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label-small">{t('method')}</label>
+                          <CustomSelect
+                            name="method"
+                            value={dist.method}
+                            onChange={(e) => updateDistribution(i, 'method', e.target.value)}
+                            options={[
+                              { value: 'bank_transfer', label: t('bankTransfer') },
+                              { value: 'cash', label: t('cash') },
+                              { value: 'revolut', label: t('revolut') },
+                              { value: 'other', label: t('otherMethod') }
+                            ]}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label-small">{t('date') || 'Date'}</label>
+                          <input
+                            className="form-input text-center"
+                            type="date"
+                            value={dist.distribution_date}
+                            onChange={(e) => updateDistribution(i, 'distribution_date', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Real-time comparative panel */}
+                {(() => {
+                  const parsedAmount = parseFloat(withdrawalAmount) || 0;
+                  const remainingAmount = parsedAmount - distTotal;
+                  const currencySymbol = selectedSource?.currency || 'DKK';
+                  
+                  let allocatedPercent = 0;
+                  let excessPercent = 0;
+                  
+                  if (parsedAmount > 0) {
+                    if (distTotal <= parsedAmount) {
+                      allocatedPercent = (distTotal / parsedAmount) * 100;
+                    } else {
+                      allocatedPercent = (parsedAmount / distTotal) * 100;
+                      excessPercent = ((distTotal - parsedAmount) / distTotal) * 100;
+                    }
+                  }
+                  
+                  const isMatch = parsedAmount > 0 && remainingAmount === 0;
+                  const isUnder = parsedAmount > 0 && remainingAmount > 0;
+                  const isOver = parsedAmount > 0 && remainingAmount < 0;
+                  
+                  return (
+                    <div className="budget-visual-panel animate-in">
+                      <div className="budget-status-row">
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
+                          {t('progress') || 'Allocation Status'}
+                        </span>
+                        <span style={{ 
+                          color: isMatch ? 'var(--accent-green)' : (isUnder ? 'var(--accent-amber)' : 'var(--accent-red)'),
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          {isMatch && `✓ ${t('matchesAmount')}`}
+                          {isUnder && `↓ ${t('underBudget')} (${formatNumber(remainingAmount)} ${currencySymbol})`}
+                          {isOver && `↑ ${t('overBudget')} (+${formatNumber(Math.abs(remainingAmount))} ${currencySymbol})`}
+                        </span>
+                      </div>
+                      
+                      <div className="budget-bar-track">
+                        {parsedAmount > 0 ? (
+                          <>
+                            <div 
+                              className={`budget-bar-fill ${isMatch ? 'perfect-match' : ''}`}
+                              style={{ 
+                                width: `${allocatedPercent}%`
+                              }}
+                            />
+                            {isOver && (
+                              <div 
+                                className="budget-bar-excess"
+                                style={{ width: `${excessPercent}%` }}
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <div style={{ width: '0%' }} />
+                        )}
+                      </div>
+
+                      <div className="budget-metrics-grid">
+                        <div className="budget-metric-card">
+                          <div className="budget-metric-label">{t('amount')}</div>
+                          <div className="budget-metric-value" style={{ color: 'var(--accent-primary)' }}>
+                            {formatNumber(parsedAmount)} <span style={{ fontSize: '8px', fontWeight: 500 }}>{currencySymbol}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="budget-metric-card">
+                          <div className="budget-metric-label">{t('distributionTotal')}</div>
+                          <div className="budget-metric-value" style={{ color: 'var(--text-heading)' }}>
+                            {formatNumber(distTotal)} <span style={{ fontSize: '8px', fontWeight: 500 }}>{currencySymbol}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="budget-metric-card">
+                          <div className="budget-metric-label">
+                            {isOver ? (t('exceedsBy') || 'Excess') : (t('remaining'))}
+                          </div>
+                          <div className="budget-metric-value" style={{ 
+                            color: isMatch ? 'var(--accent-green)' : (remainingAmount >= 0 ? 'var(--accent-amber)' : 'var(--accent-red)') 
+                          }}>
+                            {remainingAmount >= 0 ? formatNumber(remainingAmount) : `+${formatNumber(Math.abs(remainingAmount))}`}
+                            <span style={{ fontSize: '8px', fontWeight: 500 }}> {currencySymbol}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {!editingWithdrawal && (
+                  <div style={{ marginTop: 'var(--space-sm)', paddingTop: 'var(--space-sm)', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                    <label className="flex-between" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                      <span className="form-label" style={{ margin: 0, fontSize: '12px' }}>{t('saveAsTemplate')}</span>
+                      <input 
+                        type="checkbox" 
+                        checked={saveAsTemplate} 
+                        onChange={(e) => setSaveAsTemplate(e.target.checked)} 
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
+                      />
+                    </label>
+                    
+                    {saveAsTemplate && (
+                      <div className="animate-in">
+                        <input 
+                          className="form-input" 
+                          placeholder={t('templateName')} 
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.checked ? false : e.target.value)}
+                          required={saveAsTemplate}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end', marginTop: 'var(--space-lg)' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-              {t('cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary">
-              {t('save')}
-            </button>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end', marginTop: 'var(--space-lg)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  {t('cancel')}
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {t('save')}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </Modal>

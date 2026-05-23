@@ -1126,6 +1126,11 @@ tr:hover td {
   color: var(--accent-red);
 }
 
+.badge-savings {
+  background: var(--accent-green-soft);
+  color: var(--accent-green);
+}
+
 /* ========== Empty State ========== */
 .empty-state {
   text-align: center;
@@ -1213,6 +1218,20 @@ tr:hover td {
 /* ========== Withdrawal Card ========== */
 .withdrawal-card {
   margin-bottom: var(--space-md);
+  background: var(--gradient-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.withdrawal-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow), var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .withdrawal-header {
@@ -1238,18 +1257,31 @@ tr:hover td {
   margin-top: var(--space-md);
   padding-top: var(--space-md);
   border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .distribution-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-sm);
+  background: rgba(30, 41, 59, 0.2);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
 }
 
-.distribution-item + .distribution-item {
-  border-top: 1px solid rgba(30, 45, 74, 0.5);
+.distribution-item:hover {
+  background: rgba(30, 41, 59, 0.4);
+  border-color: rgba(56, 189, 248, 0.1);
+  transform: translateX(2px);
+}
+
+[dir='rtl'] .distribution-item:hover {
+  transform: translateX(-2px);
 }
 
 .distribution-name {
@@ -1265,6 +1297,7 @@ tr:hover td {
   border-radius: 50%;
   background: var(--accent-primary);
   flex-shrink: 0;
+  box-shadow: 0 0 6px var(--accent-primary);
 }
 
 .distribution-amount {
@@ -1276,13 +1309,16 @@ tr:hover td {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
   margin-inline-start: var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 /* ========== Distribution Rows Form Section ========== */
 .distributions-container {
-  margin-top: var(--space-lg);
+  margin-top: 0;
   padding: var(--space-md);
-  background: var(--bg-input);
+  background: rgba(2, 6, 23, 0.4);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
 }
@@ -1307,6 +1343,7 @@ tr:hover td {
 .distributions-list-scroll::-webkit-scrollbar-thumb {
   background: var(--border-color-light);
 }
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1341,48 +1378,55 @@ tr:hover td {
   font-size: 1.6rem;
 }
 
-/* ========== Distribution Input Row ========== */
-.dist-row-header {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr 1.6fr 1.4fr 32px;
-  gap: var(--space-sm);
-  padding: 0 4px;
-  margin-bottom: var(--space-xs);
-  font-size: 10px;
+/* ========== Distribution Input Card Layout ========== */
+.distribution-input-card {
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  position: relative;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.distribution-input-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.distribution-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
 }
 
-.dist-row {
+.distribution-card-grid {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1.6fr 1.4fr 32px;
-  gap: var(--space-sm);
-  align-items: center;
-  margin-bottom: var(--space-xs); /* Reduced from space-sm */
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-sm) var(--space-md);
 }
 
-@media (max-width: 640px) {
-  .dist-row-header {
-    display: none;
-  }
-  .dist-row {
+@media (max-width: 520px) {
+  .distribution-card-grid {
     grid-template-columns: 1fr;
-    background: var(--bg-card);
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    margin-bottom: var(--space-md);
-    gap: var(--space-md);
-    position: relative;
-    padding-top: 40px; /* Space for remove button */
   }
-  .dist-row > div:last-child {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
-  }
+}
+
+.form-label-small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
 }
 
 .dist-total-row {
@@ -1403,6 +1447,144 @@ tr:hover td {
 .dist-total-mismatch {
   color: var(--accent-red);
 }
+
+/* ========== Side-by-Side Dual Column Modal Layout ========== */
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .modal-form-grid {
+    grid-template-columns: 10fr 12fr;
+  }
+}
+
+.modal-form-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-inline-end: 1px solid var(--border-color);
+  padding-inline-end: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .modal-form-left {
+    border-inline-end: none;
+    padding-inline-end: 0;
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.modal-form-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  justify-content: space-between;
+}
+
+/* ========== Visual Allocation Comparison Panel ========== */
+.budget-visual-panel {
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.budget-bar-track {
+  height: 14px;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.budget-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+
+.budget-bar-fill.perfect-match {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+}
+
+.budget-bar-excess {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444 0%, #fb7185 100%);
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.budget-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.budget-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.budget-metric-card {
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px var(--space-xs);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.budget-metric-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.budget-metric-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+/* ========== Mini Distribution Bar on Cards ========== */
+.card-distribution-mini-bar {
+  display: flex;
+  height: 6px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.08);
+  margin: var(--space-sm) 0;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.card-distribution-mini-segment {
+  height: 100%;
+  transition: width var(--transition-slow);
+}
+
 
 /* ========== Animations ========== */
 @keyframes fadeIn {

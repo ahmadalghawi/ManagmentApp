@@ -16,6 +16,106 @@ export async function getContact(id) {
   return db.prepare('SELECT * FROM contacts WHERE id = ?').get(id);
 }
 
+export async function getContactStatement(contactId) {
+  const db = getDb();
+
+  // 1. Fetch contact details
+  const contact = db.prepare('SELECT * FROM contacts WHERE id = ?').get(contactId);
+  if (!contact) return null;
+
+  // 2. Fetch income sources where this contact is the payer
+  const incomeSources = db.prepare(`
+    SELECT * FROM income_sources WHERE contact_id = ?
+  `).all(contactId);
+
+  // 3. Fetch salary receipts where this contact is the payer
+  const salaryReceipts = db.prepare(`
+    SELECT * FROM salary_receipts WHERE payer_contact_id = ?
+  `).all(contactId);
+
+  // 4. Fetch distributions split/sent to this contact
+  const distributions = db.prepare(`
+    SELECT d.*, w.withdrawal_date, w.month_label, i.currency 
+    FROM distributions d 
+    JOIN withdrawals w ON d.withdrawal_id = w.id 
+    JOIN income_sources i ON w.income_source_id = i.id
+    WHERE d.contact_id = ?
+  `).all(contactId);
+
+  // 5. Fetch work logs for this contact/client
+  const workLogs = db.prepare(`
+    SELECT * FROM work_logs WHERE contact_id = ?
+  `).all(contactId);
+
+  // 6. Normalize and merge all into a single timeline array
+  const timeline = [];
+
+  // Add Income Sources (Inflow contracts from them)
+  incomeSources.forEach(s => {
+    timeline.push({
+      id: `source_${s.id}`,
+      date: s.start_date,
+      type: 'income_source',
+      description: s.description || `Income contract started`,
+      amount: s.total_amount,
+      currency: s.currency,
+      flow: 'inflow',
+      month_label: null
+    });
+  });
+
+  // Add Salary Receipts (Direct payments from them)
+  salaryReceipts.forEach(r => {
+    timeline.push({
+      id: `receipt_${r.id}`,
+      date: r.received_date,
+      type: 'salary_receipt',
+      description: r.description || `Payment receipt (${r.category})`,
+      amount: r.amount,
+      currency: r.currency,
+      flow: 'inflow',
+      month_label: null
+    });
+  });
+
+  // Add Distributions (Outflow splits sent to them)
+  distributions.forEach(d => {
+    timeline.push({
+      id: `dist_${d.id}`,
+      date: d.distribution_date || d.withdrawal_date,
+      type: 'distribution',
+      description: d.notes || `Monthly split payment (${d.method})`,
+      amount: d.amount,
+      currency: d.currency,
+      flow: 'outflow',
+      month_label: d.month_label
+    });
+  });
+
+  // Add Work Logs (Hourly billing/earnings accumulated)
+  workLogs.forEach(w => {
+    timeline.push({
+      id: `work_${w.id}`,
+      date: w.log_date,
+      type: 'work_log',
+      description: w.description || `${w.project_name || 'Project work'} - ${w.hours} hours logged`,
+      amount: w.hours * w.hourly_rate,
+      currency: w.currency,
+      flow: 'inflow',
+      status: w.status,
+      month_label: null
+    });
+  });
+
+  // Sort timeline chronologically (newest first)
+  timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  return {
+    contact,
+    timeline
+  };
+}
+
 export async function createContact(formData) {
   const db = getDb();
   const name = formData.get('name');
